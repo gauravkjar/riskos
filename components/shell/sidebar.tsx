@@ -44,10 +44,15 @@ export function Sidebar({ staffIdentity }: { staffIdentity?: StaffIdentity | nul
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-surface/60 px-3 py-5 md:flex">
-      <div className="mb-6 flex items-center gap-2 px-2">
-        <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_12px_2px_var(--accent)]" />
-        <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
-          RISKOS
+      <div className="mb-6 flex flex-col gap-1 px-2">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_12px_2px_var(--accent)]" />
+          <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
+            RISKOS
+          </span>
+        </div>
+        <span className="pl-4 text-[10px] uppercase tracking-[0.15em] text-muted-2">
+          Risk Control Centre
         </span>
       </div>
 

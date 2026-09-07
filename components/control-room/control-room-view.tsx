@@ -74,7 +74,7 @@ export function ControlRoomView() {
   if (assessmentId && remoteError) {
     return (
       <>
-        <Topbar title="Agent Control Room" subtitle="Execution trace" />
+        <Topbar title="Agent Monitoring" subtitle="Execution trace" />
         <div className="flex flex-1 items-center justify-center p-8">
           <Panel className="max-w-md text-center">
             <p className="text-sm text-danger">{remoteError}</p>
@@ -87,7 +87,7 @@ export function ControlRoomView() {
   if (assessmentId && loadingRemote && !remoteRun) {
     return (
       <>
-        <Topbar title="Agent Control Room" subtitle="Loading…" />
+        <Topbar title="Agent Monitoring" subtitle="Loading…" />
         <div className="flex flex-1 items-center justify-center p-8">
           <p className="text-sm text-muted">Loading agent trace…</p>
         </div>
@@ -98,7 +98,7 @@ export function ControlRoomView() {
   if (!run) {
     return (
       <>
-        <Topbar title="Agent Control Room" subtitle="Execution trace" />
+        <Topbar title="Agent Monitoring" subtitle="Execution trace" />
         <div className="flex flex-1 items-center justify-center p-8">
           <Panel className="max-w-md text-center">
             <p className="text-sm text-muted">
@@ -117,7 +117,7 @@ export function ControlRoomView() {
 
   return (
     <>
-      <Topbar title="Agent Control Room" subtitle={subtitle} />
+      <Topbar title="Agent Monitoring" subtitle={subtitle} />
       <div className="flex-1 space-y-6 overflow-y-auto p-6 md:p-8">
         <Panel>
           <PanelHeader eyebrow="Pipeline" title="Intake → Scoring → Capacity → Equity → Allocation → Portfolio → Explanation" />

@@ -42,7 +42,7 @@ export function AuditLogView() {
 
   return (
     <>
-      <Topbar title="Audit Log" subtitle="Append-only event stream — registrations, logins, assessments, config changes" />
+      <Topbar title="Audit" subtitle="Append-only event stream — registrations, logins, assessments, config changes" />
       <div className="flex-1 space-y-4 overflow-y-auto p-6 md:p-8">
         {error && (
           <Panel className="text-center">

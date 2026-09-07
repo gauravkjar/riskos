@@ -13,10 +13,15 @@ export default async function InvestorLayout({ children }: { children: React.Rea
   return (
     <div className="flex min-h-full flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-border px-8 py-4">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_12px_2px_var(--accent)]" />
-          <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
-            RISKOS
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-accent shadow-[0_0_12px_2px_var(--accent)]" />
+            <span className="font-mono text-sm font-semibold tracking-[0.2em] text-foreground">
+              RISKOS
+            </span>
+          </div>
+          <span className="pl-4 text-[10px] uppercase tracking-[0.15em] text-muted-2">
+            Investor Experience
           </span>
         </div>
 
