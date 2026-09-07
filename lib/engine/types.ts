@@ -1,8 +1,8 @@
 export type HorizonAnswer =
-  | "lessThan1Year"
-  | "oneToThreeYears"
-  | "threeToSevenYears"
-  | "sevenPlusYears";
+  | "lessThanTwoYears"
+  | "twoToFiveYears"
+  | "sixToNineYears"
+  | "tenPlusYears";
 
 export type DrawdownAnswer = "sellAll" | "sellPortion" | "hold" | "buyMore";
 

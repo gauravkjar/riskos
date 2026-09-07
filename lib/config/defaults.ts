@@ -17,8 +17,8 @@ export const defaultPortfolioSizeRules =
   portfolioSizeRules as PortfolioSizeRulesConfig;
 
 export const defaultEngineConfig: EngineConfig = {
-  version: "1.0",
-  savedAt: "2026-08-31T00:00:00.000Z",
+  version: "1.1",
+  savedAt: "2026-09-07T00:00:00.000Z",
   weights: defaultWeights,
   bands: defaultBands,
   allocationTable: defaultAllocationTable,

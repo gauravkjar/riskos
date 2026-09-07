@@ -13,5 +13,87 @@
     "Mid Cap": { "expectedReturn": 13.5, "volatility": 20.0, "worstCase": -40.0 },
     "Small Cap": { "expectedReturn": 15.0, "volatility": 25.0, "worstCase": -48.0 },
     "Gold ETF": { "expectedReturn": 8.0, "volatility": 12.0, "worstCase": -15.0 }
+  },
+  "scenarios": {
+    "Normal market": {
+      "categoryAssumptions": {
+        "Liquid Fund": { "return": 6.0 },
+        "Ultra Short Duration": { "return": 6.5 },
+        "Corporate Bond": { "return": 7.0 },
+        "Short Duration": { "return": 6.8 },
+        "Banking & PSU Debt": { "return": 7.0 },
+        "Arbitrage Fund": { "return": 6.2 },
+        "Balanced Advantage": { "return": 9.5 },
+        "Large Cap": { "return": 11.0 },
+        "Flexi Cap": { "return": 12.0 },
+        "Mid Cap": { "return": 13.5 },
+        "Small Cap": { "return": 15.0 },
+        "Gold ETF": { "return": 8.0 }
+      }
+    },
+    "Market correction": {
+      "categoryAssumptions": {
+        "Liquid Fund": { "return": 5.5 },
+        "Ultra Short Duration": { "return": 5.8 },
+        "Corporate Bond": { "return": 4.0 },
+        "Short Duration": { "return": 4.5 },
+        "Banking & PSU Debt": { "return": 4.2 },
+        "Arbitrage Fund": { "return": 5.0 },
+        "Balanced Advantage": { "return": -4.0 },
+        "Large Cap": { "return": -10.0 },
+        "Flexi Cap": { "return": -11.0 },
+        "Mid Cap": { "return": -14.0 },
+        "Small Cap": { "return": -18.0 },
+        "Gold ETF": { "return": 6.0 }
+      }
+    },
+    "Severe downturn": {
+      "categoryAssumptions": {
+        "Liquid Fund": { "return": 5.0 },
+        "Ultra Short Duration": { "return": 5.2 },
+        "Corporate Bond": { "return": 1.0 },
+        "Short Duration": { "return": 1.5 },
+        "Banking & PSU Debt": { "return": 1.0 },
+        "Arbitrage Fund": { "return": 3.5 },
+        "Balanced Advantage": { "return": -12.0 },
+        "Large Cap": { "return": -25.0 },
+        "Flexi Cap": { "return": -27.0 },
+        "Mid Cap": { "return": -33.0 },
+        "Small Cap": { "return": -40.0 },
+        "Gold ETF": { "return": 10.0 }
+      }
+    },
+    "Crisis": {
+      "categoryAssumptions": {
+        "Liquid Fund": { "return": 4.0 },
+        "Ultra Short Duration": { "return": 3.5 },
+        "Corporate Bond": { "return": -3.0 },
+        "Short Duration": { "return": -1.0 },
+        "Banking & PSU Debt": { "return": -2.0 },
+        "Arbitrage Fund": { "return": 1.5 },
+        "Balanced Advantage": { "return": -20.0 },
+        "Large Cap": { "return": -38.0 },
+        "Flexi Cap": { "return": -41.0 },
+        "Mid Cap": { "return": -48.0 },
+        "Small Cap": { "return": -55.0 },
+        "Gold ETF": { "return": 16.0 }
+      }
+    },
+    "Recovery": {
+      "categoryAssumptions": {
+        "Liquid Fund": { "return": 6.2 },
+        "Ultra Short Duration": { "return": 6.8 },
+        "Corporate Bond": { "return": 8.5 },
+        "Short Duration": { "return": 8.0 },
+        "Banking & PSU Debt": { "return": 8.2 },
+        "Arbitrage Fund": { "return": 7.0 },
+        "Balanced Advantage": { "return": 16.0 },
+        "Large Cap": { "return": 22.0 },
+        "Flexi Cap": { "return": 25.0 },
+        "Mid Cap": { "return": 30.0 },
+        "Small Cap": { "return": 36.0 },
+        "Gold ETF": { "return": 2.0 }
+      }
+    }
   }
 }

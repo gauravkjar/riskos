@@ -4,6 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { primaryNav, systemNav, type NavItem } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { StaffLogoutButton } from "@/components/auth/staff-logout-button";
+
+interface StaffIdentity {
+  label: string;
+  initials: string;
+}
 
 function NavGroup({ items, pathname }: { items: NavItem[]; pathname: string }) {
   return (
@@ -33,7 +39,7 @@ function NavGroup({ items, pathname }: { items: NavItem[]; pathname: string }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ staffIdentity }: { staffIdentity?: StaffIdentity | null }) {
   const pathname = usePathname();
 
   return (
@@ -55,10 +61,22 @@ export function Sidebar() {
         </div>
       </nav>
 
+      {staffIdentity ? (
+        <div className="mt-4 flex items-center justify-between gap-2 border-t border-border px-3 pt-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-raised text-xs text-foreground">
+              {staffIdentity.initials}
+            </span>
+            <span className="truncate text-[11px] text-muted-2">{staffIdentity.label}</span>
+          </div>
+          <StaffLogoutButton />
+        </div>
+      ) : null}
+
       <div className="mt-4 border-t border-border px-3 pt-4 text-[11px] text-muted-2">
         <div className="flex items-center justify-between">
           <span>Engine</span>
-          <span className="tabular text-accent">v1.0</span>
+          <span className="tabular text-accent">v1.1</span>
         </div>
         <div className="mt-1 flex items-center justify-between">
           <span>Status</span>

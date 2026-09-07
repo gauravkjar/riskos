@@ -5,7 +5,7 @@ describe("computeRiskScore", () => {
   it("reproduces the MF_Risk_Engine.xlsx Sheet 8 worked example (golden path)", () => {
     const result = computeRiskScore(
       {
-        horizon: "sevenPlusYears", // 100
+        horizon: "tenPlusYears", // 100
         drawdownReaction: "hold", // 70
         incomeStability: "twoIncomes", // 70
       },
@@ -34,7 +34,7 @@ describe("computeRiskScore", () => {
 
   it("produces a Medium-confidence Stage-1-only result when Stage 2 is skipped", () => {
     const result = computeRiskScore({
-      horizon: "sevenPlusYears", // 100
+      horizon: "tenPlusYears", // 100
       drawdownReaction: "hold", // 70
       incomeStability: "twoIncomes", // 70
     });
@@ -50,7 +50,7 @@ describe("computeRiskScore", () => {
   it("lets the liquidity cap bind and pull Stage 2 below Stage 1 (capacity tightens down only)", () => {
     const result = computeRiskScore(
       {
-        horizon: "sevenPlusYears", // 100
+        horizon: "tenPlusYears", // 100
         drawdownReaction: "buyMore", // 100
         incomeStability: "twoIncomes", // 70
       },

@@ -1,18 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Topbar } from "@/components/shell/topbar";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Badge } from "@/components/ui/badge";
-import { useEngineConfig } from "@/lib/store/use-config";
-import { getConfigHistory, resetEngineConfig, saveEngineConfig } from "@/lib/store/config-store";
+import type { EngineConfig } from "@/lib/config/types";
+import type { ModelConfigVersion } from "@/lib/db/schema";
+
+interface ConfigApiResponse {
+  latest: EngineConfig;
+  history: ModelConfigVersion[];
+}
 
 export function ModelConfigView() {
-  const config = useEngineConfig();
-  const [horizonWeight, setHorizonWeight] = useState(config.weights.capacityWeights.horizon);
-  const [stage1Weight, setStage1Weight] = useState(config.weights.stageBlend.stage1);
+  const [data, setData] = useState<ConfigApiResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [horizonWeight, setHorizonWeight] = useState<number | null>(null);
+  const [stage1Weight, setStage1Weight] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
-  const history = getConfigHistory();
+  const [saving, setSaving] = useState(false);
+
+  function load() {
+    fetch("/api/internal/model-config")
+      .then(async (res) => {
+        const body = await res.json();
+        if (!res.ok) throw new Error(body?.error ?? "Failed to load model configuration.");
+        return body as ConfigApiResponse;
+      })
+      .then((body) => {
+        setData(body);
+        setHorizonWeight(body.latest.weights.capacityWeights.horizon);
+        setStage1Weight(body.latest.weights.stageBlend.stage1);
+        setError(null);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load."));
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  if (error) {
+    return (
+      <>
+        <Topbar title="Model Configuration" subtitle="Versioned weights & rules" />
+        <div className="p-8">
+          <Panel>
+            <p className="text-sm text-danger">{error}</p>
+            <p className="mt-2 text-xs text-muted-2">
+              This page requires a MODEL_ADMIN or ADMIN session. Sign in at /staff-login.
+            </p>
+          </Panel>
+        </div>
+      </>
+    );
+  }
+
+  if (!data || horizonWeight === null || stage1Weight === null) {
+    return (
+      <>
+        <Topbar title="Model Configuration" subtitle="Versioned weights & rules" />
+        <div className="p-8">
+          <p className="text-sm text-muted">Loading…</p>
+        </div>
+      </>
+    );
+  }
+
+  const config = data.latest;
 
   function updateHorizon(value: number) {
     setHorizonWeight(value);
@@ -23,23 +78,45 @@ export function ModelConfigView() {
     setDirty(true);
   }
 
-  function handleSave() {
-    const next = {
-      weights: {
-        ...config.weights,
-        capacityWeights: { horizon: horizonWeight, income: Math.round((1 - horizonWeight) * 100) / 100 },
-        stageBlend: { stage1: stage1Weight, stage2: Math.round((1 - stage1Weight) * 100) / 100 },
-      },
-      bands: config.bands,
-      allocationTable: config.allocationTable,
-      portfolioSizeRules: config.portfolioSizeRules,
-    };
-    saveEngineConfig(next);
-    setDirty(false);
+  async function handleSave() {
+    if (horizonWeight === null || stage1Weight === null) return;
+    setSaving(true);
+    try {
+      const next: Omit<EngineConfig, "version" | "savedAt"> = {
+        weights: {
+          ...config.weights,
+          capacityWeights: {
+            horizon: horizonWeight,
+            income: Math.round((1 - horizonWeight) * 100) / 100,
+          },
+          stageBlend: {
+            stage1: stage1Weight,
+            stage2: Math.round((1 - stage1Weight) * 100) / 100,
+          },
+        },
+        bands: config.bands,
+        allocationTable: config.allocationTable,
+        portfolioSizeRules: config.portfolioSizeRules,
+      };
+      const res = await fetch("/api/internal/model-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(next),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body?.error ?? "Failed to save.");
+      setDirty(false);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleReset() {
-    resetEngineConfig();
+    setHorizonWeight(config.weights.capacityWeights.horizon);
+    setStage1Weight(config.weights.stageBlend.stage1);
     setDirty(false);
   }
 
@@ -56,17 +133,18 @@ export function ModelConfigView() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:border-border-strong hover:text-foreground"
+                  disabled={!dirty}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:border-border-strong hover:text-foreground disabled:opacity-40"
                 >
-                  Reset to shipped defaults
+                  Discard changes
                 </button>
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={!dirty}
+                  disabled={!dirty || saving}
                   className="rounded-md border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs text-accent-strong hover:bg-accent/15 disabled:opacity-40"
                 >
-                  Save (bumps version)
+                  {saving ? "Saving…" : "Save (bumps version)"}
                 </button>
               </div>
             }
@@ -120,7 +198,8 @@ export function ModelConfigView() {
 
           {dirty && (
             <Badge tone="warn" className="mt-4">
-              Unsaved changes — saving bumps the model version, nothing mutates silently
+              Unsaved changes — saving bumps the model version and takes effect for the next
+              investor assessment immediately
             </Badge>
           )}
         </Panel>
@@ -128,12 +207,23 @@ export function ModelConfigView() {
         <Panel>
           <PanelHeader eyebrow="History" title="Version history" />
           <div className="space-y-2">
-            {[...history].reverse().map((h) => (
-              <div key={h.version + h.savedAt} className="flex items-center justify-between border-b border-border py-2 text-sm last:border-0">
+            {data.history.length === 0 && (
+              <p className="text-[13px] text-muted">
+                No saved versions yet — investor assessments are currently using shipped defaults
+                (v{config.version}).
+              </p>
+            )}
+            {[...data.history].reverse().map((h) => (
+              <div
+                key={h.id}
+                className="flex items-center justify-between border-b border-border py-2 text-sm last:border-0"
+              >
                 <span className="tabular text-foreground">v{h.version}</span>
-                <span className="tabular text-xs text-muted-2">{new Date(h.savedAt).toLocaleString()}</span>
+                <span className="tabular text-xs text-muted-2">
+                  {new Date(h.savedAt).toLocaleString()}
+                </span>
                 <span className="text-xs text-muted">
-                  H:{h.weights.capacityWeights.horizon} / S1:{h.weights.stageBlend.stage1}
+                  H:{h.config.weights.capacityWeights.horizon} / S1:{h.config.weights.stageBlend.stage1}
                 </span>
               </div>
             ))}

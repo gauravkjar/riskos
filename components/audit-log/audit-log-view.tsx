@@ -1,110 +1,111 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Topbar } from "@/components/shell/topbar";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Badge } from "@/components/ui/badge";
-import { useRuns } from "@/lib/store/use-runs";
-import { computeRiskScore } from "@/lib/engine/risk-scoring";
-import { defaultEngineConfig } from "@/lib/config/defaults";
+import type { AuditEvent } from "@/lib/db/schema";
+
+type AuditRow = AuditEvent & { userEmail: string | null };
+
+const TYPE_TONE: Record<string, "accent" | "warn" | "neutral" | "danger"> = {
+  "assessment.created": "accent",
+  "model_config.updated": "warn",
+  "user.registered": "neutral",
+  "user.login": "neutral",
+  "user.bootstrap_admin_created": "danger",
+};
 
 export function AuditLogView() {
-  const runs = useRuns();
+  const [events, setEvents] = useState<AuditRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/internal/audit-log")
+      .then(async (res) => {
+        const body = await res.json();
+        if (!res.ok) throw new Error(body?.error ?? "Failed to load audit log.");
+        return body as AuditRow[];
+      })
+      .then((data) => {
+        if (!cancelled) setEvents(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <>
-      <Topbar title="Audit Log" subtitle="Reproducible runs" />
+      <Topbar title="Audit Log" subtitle="Append-only event stream — registrations, logins, assessments, config changes" />
       <div className="flex-1 space-y-4 overflow-y-auto p-6 md:p-8">
-        {runs.length === 0 ? (
+        {error && (
           <Panel className="text-center">
-            <p className="text-sm text-muted">
-              No runs recorded yet.{" "}
-              <Link href="/profiler" className="text-accent-strong hover:underline">
-                Start the Risk Profiler
-              </Link>{" "}
-              to create the first audit entry.
-            </p>
+            <p className="text-sm text-danger">{error}</p>
           </Panel>
-        ) : (
-          runs.map((run) => {
-            const isOpen = expanded === run.id;
-            const replay = computeRiskScore(
-              run.stage1,
-              run.stage2 ?? undefined,
-              defaultEngineConfig.weights,
-              defaultEngineConfig.bands
-            );
-            const reproducible = replay.finalScore === run.score.finalScore && replay.band === run.score.band;
+        )}
+        {!error && !events && <p className="text-sm text-muted">Loading…</p>}
+        {!error && events && events.length === 0 && (
+          <Panel className="text-center">
+            <p className="text-sm text-muted">No audit events recorded yet.</p>
+          </Panel>
+        )}
+        {!error &&
+          events &&
+          events.map((event) => {
+            const isOpen = expanded === event.id;
+            const assessmentId =
+              typeof event.payload?.assessmentId === "string"
+                ? (event.payload.assessmentId as string)
+                : null;
 
             return (
-              <Panel key={run.id}>
+              <Panel key={event.id}>
                 <button
                   type="button"
-                  onClick={() => setExpanded(isOpen ? null : run.id)}
+                  onClick={() => setExpanded(isOpen ? null : event.id)}
                   className="flex w-full items-center justify-between gap-4 text-left"
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="tabular text-sm font-medium text-foreground">{run.id}</span>
-                      <Badge tone="neutral">v{run.modelVersion}</Badge>
-                      <Badge tone={run.score.confidence === "High" ? "accent" : "warn"}>
-                        {run.score.band} · {run.score.finalScore}
-                      </Badge>
-                      {reproducible ? (
-                        <Badge tone="accent">Reproducible</Badge>
-                      ) : (
-                        <Badge tone="danger">Diverges from current defaults</Badge>
-                      )}
+                      <Badge tone={TYPE_TONE[event.type] ?? "neutral"}>{event.type}</Badge>
+                      <span className="tabular text-sm text-foreground">
+                        {event.userEmail ?? "system"}
+                      </span>
                     </div>
                     <span className="text-[11px] text-muted-2">
-                      {new Date(run.createdAt).toLocaleString()}
+                      {new Date(event.createdAt).toLocaleString()}
                     </span>
                   </div>
                   <span className="text-muted-2">{isOpen ? "−" : "+"}</span>
                 </button>
 
                 {isOpen && (
-                  <div className="mt-4 space-y-4 border-t border-border pt-4 text-[13px]">
+                  <div className="mt-4 space-y-3 border-t border-border pt-4 text-[13px]">
                     <div>
-                      <PanelHeader eyebrow="Raw inputs" title="Answers" />
-                      <pre className="overflow-x-auto rounded-md bg-black/30 p-3 text-xs text-muted">
-                        {JSON.stringify({ stage1: run.stage1, stage2: run.stage2 }, null, 2)}
+                      <PanelHeader eyebrow="Raw payload" title="Event data" />
+                      <pre className="tabular overflow-x-auto rounded-md bg-black/30 p-3 text-xs text-muted">
+                        {JSON.stringify(event.payload, null, 2)}
                       </pre>
                     </div>
-                    <div>
-                      <PanelHeader eyebrow="Intermediate scores" title="Engine output" />
-                      <pre className="overflow-x-auto rounded-md bg-black/30 p-3 text-xs text-muted">
-                        {JSON.stringify(run.score, null, 2)}
-                      </pre>
-                    </div>
-                    <div>
-                      <PanelHeader eyebrow="Allocation" title={`${run.allocationKey} · ${run.fundCount} funds`} />
-                      <pre className="overflow-x-auto rounded-md bg-black/30 p-3 text-xs text-muted">
-                        {JSON.stringify(run.allocationLines, null, 2)}
-                      </pre>
-                    </div>
-                    <div className="flex gap-3">
-                      <Link
-                        href={`/risk-intelligence?run=${run.id}`}
-                        className="rounded-md border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs text-accent-strong hover:bg-accent/15"
+                    {assessmentId && (
+                      <a
+                        href={`/profiles/${assessmentId}`}
+                        className="inline-block rounded-md border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs text-accent-strong hover:bg-accent/15"
                       >
-                        Open in Risk Intelligence
-                      </Link>
-                      <Link
-                        href={`/control-room?run=${run.id}`}
-                        className="rounded-md border border-border px-3 py-1.5 text-xs text-muted hover:border-border-strong hover:text-foreground"
-                      >
-                        View agent trace
-                      </Link>
-                    </div>
+                        Open assessment record
+                      </a>
+                    )}
                   </div>
                 )}
               </Panel>
             );
-          })
-        )}
+          })}
       </div>
     </>
   );

@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local file-backed dev database (never commit real user data)
+/data/db.json
+
 # claude code local settings
 /.claude/settings.local.json
 

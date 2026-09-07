@@ -1,5 +1,5 @@
 {
-  "modelVersion": "1.0",
+  "modelVersion": "1.1",
   "source": "MF_Risk_Engine.xlsx — Sheet 3. Weight Config",
   "capacityWeights": {
     "horizon": 0.7,
@@ -12,10 +12,10 @@
   "neutralToleranceAnchor": 50,
   "questionScores": {
     "horizon": {
-      "lessThan1Year": 5,
-      "oneToThreeYears": 35,
-      "threeToSevenYears": 70,
-      "sevenPlusYears": 100
+      "lessThanTwoYears": 5,
+      "twoToFiveYears": 35,
+      "sixToNineYears": 70,
+      "tenPlusYears": 100
     },
     "drawdownReaction": {
       "sellAll": 0,

@@ -17,10 +17,10 @@ export const horizonQuestion = {
   prompt: "When do you expect to need this money?",
   context: "Drives your capacity ceiling — the single largest weight in the model.",
   options: [
-    { value: "lessThan1Year", label: "Within the next year" },
-    { value: "oneToThreeYears", label: "In 1–3 years" },
-    { value: "threeToSevenYears", label: "In 3–7 years" },
-    { value: "sevenPlusYears", label: "7+ years away" },
+    { value: "lessThanTwoYears", label: "Within the next 2 years" },
+    { value: "twoToFiveYears", label: "In 2–5 years" },
+    { value: "sixToNineYears", label: "In 6–9 years" },
+    { value: "tenPlusYears", label: "10+ years away" },
   ] satisfies QuestionOption<HorizonAnswer>[],
 };
 
