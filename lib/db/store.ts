@@ -1,87 +1,141 @@
 import { randomUUID } from "crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
-import path from "path";
+import type { PoolClient } from "pg";
+import { getPool } from "./pg";
 import type {
   AuditEvent,
-  Database,
   InvestorProfile,
   ModelConfigVersion,
   RiskAssessment,
+  RiskAssessmentStatus,
   User,
 } from "./schema";
 import type { EngineConfig } from "@/lib/config/types";
 import { defaultEngineConfig } from "@/lib/config/defaults";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_PATH = path.join(DATA_DIR, "db.json");
-
-function emptyDb(): Database {
-  return { users: [], profiles: [], assessments: [], auditEvents: [], modelConfigVersions: [] };
-}
-
-function ensureDbFile(): void {
-  if (!existsSync(DATA_DIR)) {
-    mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!existsSync(DB_PATH)) {
-    writeFileSync(DB_PATH, JSON.stringify(emptyDb(), null, 2), "utf8");
-  }
-}
-
-function readDb(): Database {
-  ensureDbFile();
-  try {
-    const raw = readFileSync(DB_PATH, "utf8");
-    const parsed = JSON.parse(raw) as Partial<Database>;
-    return {
-      users: parsed.users ?? [],
-      profiles: parsed.profiles ?? [],
-      assessments: parsed.assessments ?? [],
-      auditEvents: parsed.auditEvents ?? [],
-      modelConfigVersions: parsed.modelConfigVersions ?? [],
-    };
-  } catch {
-    return emptyDb();
-  }
-}
-
-function writeDb(db: Database): void {
-  writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf8");
-}
-
-// Simple in-process write queue so concurrent async callers don't interleave
-// read-modify-write cycles and clobber each other. Not safe across multiple
-// server processes — this is a single-process dev/demo store.
-let writeLock: Promise<unknown> = Promise.resolve();
-
-function enqueue<T>(fn: (db: Database) => T): Promise<T> {
-  const result = writeLock.then(() => {
-    const db = readDb();
-    const value = fn(db);
-    writeDb(db);
-    return value;
-  });
-  // Swallow errors for the chain itself so one failure doesn't wedge the
-  // queue forever; the caller still sees the rejection via `result`.
-  writeLock = result.catch(() => undefined);
-  return result;
-}
-
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+// ---------- Row -> domain mapping ----------
+
+interface UserRow {
+  id: string;
+  email: string;
+  password_hash: string;
+  role: string;
+  created_at: string | Date;
+}
+
+function toIso(value: string | Date): string {
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+}
+
+function mapUser(row: UserRow): User {
+  return {
+    id: row.id,
+    email: row.email,
+    passwordHash: row.password_hash,
+    role: row.role as User["role"],
+    createdAt: toIso(row.created_at),
+  };
+}
+
+interface ProfileRow {
+  id: string;
+  user_id: string;
+  display_name: string;
+  created_at: string | Date;
+}
+
+function mapProfile(row: ProfileRow): InvestorProfile {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    displayName: row.display_name,
+    createdAt: toIso(row.created_at),
+  };
+}
+
+interface AssessmentRow {
+  id: string;
+  user_id: string;
+  profile_id: string;
+  version: number;
+  created_at: string | Date;
+  answers: RiskAssessment["answers"];
+  run: RiskAssessment["run"];
+  status: string;
+}
+
+function mapAssessment(row: AssessmentRow): RiskAssessment {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    profileId: row.profile_id,
+    version: row.version,
+    createdAt: toIso(row.created_at),
+    // pg returns jsonb columns already parsed as JS objects/arrays.
+    answers: row.answers,
+    run: row.run,
+    status: row.status as RiskAssessmentStatus,
+  };
+}
+
+interface AuditEventRow {
+  id: string;
+  user_id: string | null;
+  type: string;
+  payload: Record<string, unknown>;
+  created_at: string | Date;
+}
+
+function mapAuditEvent(row: AuditEventRow): AuditEvent {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: row.type,
+    payload: row.payload,
+    createdAt: toIso(row.created_at),
+  };
+}
+
+interface ModelConfigVersionRow {
+  id: string;
+  version: string;
+  saved_at: string | Date;
+  saved_by_user_id: string;
+  config: EngineConfig;
+}
+
+function mapModelConfigVersion(row: ModelConfigVersionRow): ModelConfigVersion {
+  return {
+    id: row.id,
+    version: row.version,
+    savedAt: toIso(row.saved_at),
+    savedByUserId: row.saved_by_user_id,
+    config: row.config,
+  };
 }
 
 // ---------- Users ----------
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const db = readDb();
+  const pool = await getPool();
   const normalized = email.trim().toLowerCase();
-  return db.users.find((u) => u.email.toLowerCase() === normalized) ?? null;
+  const { rows } = await pool.query<UserRow>(
+    "SELECT id, email, password_hash, role, created_at FROM users WHERE lower(email) = $1",
+    [normalized]
+  );
+  return rows[0] ? mapUser(rows[0]) : null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  const db = readDb();
-  return db.users.find((u) => u.id === id) ?? null;
+  const pool = await getPool();
+  const { rows } = await pool.query<UserRow>(
+    "SELECT id, email, password_hash, role, created_at FROM users WHERE id = $1",
+    [id]
+  );
+  return rows[0] ? mapUser(rows[0]) : null;
 }
 
 export async function createUser(input: {
@@ -89,33 +143,46 @@ export async function createUser(input: {
   passwordHash: string;
   role: User["role"];
 }): Promise<User> {
-  return enqueue((db) => {
-    const existing = db.users.find(
-      (u) => u.email.toLowerCase() === input.email.trim().toLowerCase()
-    );
-    if (existing) {
-      throw new Error("A user with this email already exists.");
-    }
-    const user: User = {
-      id: randomUUID(),
-      email: input.email.trim().toLowerCase(),
-      passwordHash: input.passwordHash,
-      role: input.role,
-      createdAt: nowIso(),
-    };
-    db.users.push(user);
-    return user;
-  });
+  const pool = await getPool();
+  const normalizedEmail = input.email.trim().toLowerCase();
+
+  const existing = await pool.query<{ id: string }>(
+    "SELECT id FROM users WHERE lower(email) = $1",
+    [normalizedEmail]
+  );
+  if (existing.rows.length > 0) {
+    throw new Error("A user with this email already exists.");
+  }
+
+  const user: User = {
+    id: randomUUID(),
+    email: normalizedEmail,
+    passwordHash: input.passwordHash,
+    role: input.role,
+    createdAt: nowIso(),
+  };
+  await pool.query(
+    "INSERT INTO users (id, email, password_hash, role, created_at) VALUES ($1, $2, $3, $4, $5)",
+    [user.id, user.email, user.passwordHash, user.role, user.createdAt]
+  );
+  return user;
 }
 
 export async function getAllUsers(): Promise<User[]> {
-  const db = readDb();
-  return db.users;
+  const pool = await getPool();
+  const { rows } = await pool.query<UserRow>(
+    "SELECT id, email, password_hash, role, created_at FROM users"
+  );
+  return rows.map(mapUser);
 }
 
 export async function hasAnyUserWithRole(role: User["role"]): Promise<boolean> {
-  const db = readDb();
-  return db.users.some((u) => u.role === role);
+  const pool = await getPool();
+  const { rows } = await pool.query<{ exists: boolean }>(
+    "SELECT EXISTS(SELECT 1 FROM users WHERE role = $1) AS exists",
+    [role]
+  );
+  return rows[0]?.exists ?? false;
 }
 
 // ---------- Investor profiles ----------
@@ -124,21 +191,27 @@ export async function createProfile(input: {
   userId: string;
   displayName: string;
 }): Promise<InvestorProfile> {
-  return enqueue((db) => {
-    const profile: InvestorProfile = {
-      id: randomUUID(),
-      userId: input.userId,
-      displayName: input.displayName,
-      createdAt: nowIso(),
-    };
-    db.profiles.push(profile);
-    return profile;
-  });
+  const pool = await getPool();
+  const profile: InvestorProfile = {
+    id: randomUUID(),
+    userId: input.userId,
+    displayName: input.displayName,
+    createdAt: nowIso(),
+  };
+  await pool.query(
+    "INSERT INTO profiles (id, user_id, display_name, created_at) VALUES ($1, $2, $3, $4)",
+    [profile.id, profile.userId, profile.displayName, profile.createdAt]
+  );
+  return profile;
 }
 
 export async function getProfilesByUser(userId: string): Promise<InvestorProfile[]> {
-  const db = readDb();
-  return db.profiles.filter((p) => p.userId === userId);
+  const pool = await getPool();
+  const { rows } = await pool.query<ProfileRow>(
+    "SELECT id, user_id, display_name, created_at FROM profiles WHERE user_id = $1",
+    [userId]
+  );
+  return rows.map(mapProfile);
 }
 
 // ---------- Risk assessments ----------
@@ -149,16 +222,25 @@ export async function createAssessment(input: {
   answers: RiskAssessment["answers"];
   run: RiskAssessment["run"];
 }): Promise<RiskAssessment> {
-  return enqueue((db) => {
-    const priorForProfile = db.assessments.filter(
-      (a) => a.profileId === input.profileId
+  const pool = await getPool();
+  const client: PoolClient = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows: countRows } = await client.query<{ count: string }>(
+      "SELECT COUNT(*)::int AS count FROM assessments WHERE profile_id = $1",
+      [input.profileId]
     );
+    const priorCount = Number(countRows[0]?.count ?? 0);
+    const version = priorCount + 1;
+
     // Never overwrite/delete history: mark prior versions superseded, then
-    // append a new one.
-    for (const prior of priorForProfile) {
-      prior.status = "superseded";
-    }
-    const version = priorForProfile.length + 1;
+    // append a new one, atomically.
+    await client.query("UPDATE assessments SET status = $1 WHERE profile_id = $2", [
+      "superseded",
+      input.profileId,
+    ]);
+
     const assessment: RiskAssessment = {
       id: randomUUID(),
       userId: input.userId,
@@ -169,16 +251,41 @@ export async function createAssessment(input: {
       run: input.run,
       status: "active",
     };
-    db.assessments.push(assessment);
+
+    await client.query(
+      `INSERT INTO assessments
+        (id, user_id, profile_id, version, created_at, answers, run, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        assessment.id,
+        assessment.userId,
+        assessment.profileId,
+        assessment.version,
+        assessment.createdAt,
+        JSON.stringify(assessment.answers),
+        JSON.stringify(assessment.run),
+        assessment.status,
+      ]
+    );
+
+    await client.query("COMMIT");
     return assessment;
-  });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export async function getAssessmentsByUser(userId: string): Promise<RiskAssessment[]> {
-  const db = readDb();
-  return db.assessments
-    .filter((a) => a.userId === userId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const pool = await getPool();
+  const { rows } = await pool.query<AssessmentRow>(
+    `SELECT id, user_id, profile_id, version, created_at, answers, run, status
+     FROM assessments WHERE user_id = $1 ORDER BY created_at DESC`,
+    [userId]
+  );
+  return rows.map(mapAssessment);
 }
 
 /**
@@ -191,11 +298,16 @@ export async function getAssessmentById(
   id: string,
   requestingUserId: string
 ): Promise<RiskAssessment | null> {
-  const db = readDb();
-  const assessment = db.assessments.find((a) => a.id === id);
-  if (!assessment) return null;
-  if (assessment.userId !== requestingUserId) return null;
-  return assessment;
+  const pool = await getPool();
+  const { rows } = await pool.query<AssessmentRow>(
+    `SELECT id, user_id, profile_id, version, created_at, answers, run, status
+     FROM assessments WHERE id = $1`,
+    [id]
+  );
+  const row = rows[0];
+  if (!row) return null;
+  if (row.user_id !== requestingUserId) return null;
+  return mapAssessment(row);
 }
 
 /**
@@ -204,8 +316,12 @@ export async function getAssessmentById(
  * access with `requireRole(...)` before calling this.
  */
 export async function getAllAssessments(): Promise<RiskAssessment[]> {
-  const db = readDb();
-  return [...db.assessments].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const pool = await getPool();
+  const { rows } = await pool.query<AssessmentRow>(
+    `SELECT id, user_id, profile_id, version, created_at, answers, run, status
+     FROM assessments ORDER BY created_at DESC`
+  );
+  return rows.map(mapAssessment);
 }
 
 // ---------- Audit events ----------
@@ -215,22 +331,27 @@ export async function appendAuditEvent(input: {
   type: string;
   payload: Record<string, unknown>;
 }): Promise<AuditEvent> {
-  return enqueue((db) => {
-    const event: AuditEvent = {
-      id: randomUUID(),
-      userId: input.userId,
-      type: input.type,
-      payload: input.payload,
-      createdAt: nowIso(),
-    };
-    db.auditEvents.push(event);
-    return event;
-  });
+  const pool = await getPool();
+  const event: AuditEvent = {
+    id: randomUUID(),
+    userId: input.userId,
+    type: input.type,
+    payload: input.payload,
+    createdAt: nowIso(),
+  };
+  await pool.query(
+    "INSERT INTO audit_events (id, user_id, type, payload, created_at) VALUES ($1, $2, $3, $4, $5)",
+    [event.id, event.userId, event.type, JSON.stringify(event.payload), event.createdAt]
+  );
+  return event;
 }
 
 export async function getAuditEvents(): Promise<AuditEvent[]> {
-  const db = readDb();
-  return [...db.auditEvents].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const pool = await getPool();
+  const { rows } = await pool.query<AuditEventRow>(
+    "SELECT id, user_id, type, payload, created_at FROM audit_events ORDER BY created_at DESC"
+  );
+  return rows.map(mapAuditEvent);
 }
 
 // ---------- Model configuration versions ----------
@@ -247,37 +368,43 @@ function bumpVersion(version: string): string {
 }
 
 export async function getModelConfigHistory(): Promise<ModelConfigVersion[]> {
-  const db = readDb();
-  return [...db.modelConfigVersions].sort((a, b) => a.savedAt.localeCompare(b.savedAt));
+  const pool = await getPool();
+  const { rows } = await pool.query<ModelConfigVersionRow>(
+    "SELECT id, version, saved_at, saved_by_user_id, config FROM model_config_versions ORDER BY saved_at ASC"
+  );
+  return rows.map(mapModelConfigVersion);
 }
 
 /**
  * Returns the most recently saved model config, or the shipped default
- * (wrapped to look like a version row, id "default") if nothing has been
- * saved yet.
+ * if nothing has been saved yet.
  */
 export async function getLatestModelConfig(): Promise<EngineConfig> {
-  const db = readDb();
-  if (db.modelConfigVersions.length === 0) {
+  const pool = await getPool();
+  const { rows } = await pool.query<ModelConfigVersionRow>(
+    "SELECT id, version, saved_at, saved_by_user_id, config FROM model_config_versions ORDER BY saved_at DESC LIMIT 1"
+  );
+  if (rows.length === 0) {
     return defaultEngineConfig;
   }
-  const latest = [...db.modelConfigVersions].sort((a, b) =>
-    b.savedAt.localeCompare(a.savedAt)
-  )[0];
-  return latest.config;
+  return mapModelConfigVersion(rows[0]).config;
 }
 
 export async function saveModelConfigVersion(input: {
   savedByUserId: string;
   config: Omit<EngineConfig, "version" | "savedAt">;
 }): Promise<ModelConfigVersion> {
-  return enqueue((db) => {
-    const currentVersion =
-      db.modelConfigVersions.length === 0
-        ? defaultEngineConfig.version
-        : [...db.modelConfigVersions].sort((a, b) => b.savedAt.localeCompare(a.savedAt))[0]
-            .config.version;
+  const pool = await getPool();
+  const client: PoolClient = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows } = await client.query<{ version: string }>(
+      "SELECT version FROM model_config_versions ORDER BY saved_at DESC LIMIT 1"
+    );
+    const currentVersion = rows[0]?.version ?? defaultEngineConfig.version;
     const nextVersion = bumpVersion(currentVersion);
+
     const config: EngineConfig = {
       ...input.config,
       version: nextVersion,
@@ -290,7 +417,19 @@ export async function saveModelConfigVersion(input: {
       savedByUserId: input.savedByUserId,
       config,
     };
-    db.modelConfigVersions.push(row);
+
+    await client.query(
+      `INSERT INTO model_config_versions (id, version, saved_at, saved_by_user_id, config)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [row.id, row.version, row.savedAt, row.savedByUserId, JSON.stringify(row.config)]
+    );
+
+    await client.query("COMMIT");
     return row;
-  });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }

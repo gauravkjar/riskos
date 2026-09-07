@@ -32,11 +32,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.local.example
 
 # vercel
 .vercel
 
-# local file-backed dev database (never commit real user data)
+# local file-backed dev database (superseded by Postgres; left here in case
+# data/db.json.example is still kept around for reference)
 /data/db.json
 
 # claude code local settings
@@ -49,5 +51,6 @@ next-env.d.ts
 # workbook rebuild scratch scripts / planning docs (not part of the app)
 /*.py
 /*.md
+!/README-DB.md
 /*.txt
 nul
