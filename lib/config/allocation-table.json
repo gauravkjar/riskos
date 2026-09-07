@@ -1,0 +1,73 @@
+{
+  "modelVersion": "1.0",
+  "source": "MF_Risk_Engine.xlsx — Sheet 7. Allocation Engine (13 fixed rows: VC/C/M have basket sizes 2,3,4; MA/A have basket sizes 3,4 only)",
+  "allocations": {
+    "VC-2": [
+      { "category": "Liquid Fund", "percent": 60 },
+      { "category": "Ultra Short Duration", "percent": 40 }
+    ],
+    "VC-3": [
+      { "category": "Liquid Fund", "percent": 40 },
+      { "category": "Ultra Short Duration", "percent": 35 },
+      { "category": "Corporate Bond", "percent": 25 }
+    ],
+    "VC-4": [
+      { "category": "Liquid Fund", "percent": 30 },
+      { "category": "Ultra Short Duration", "percent": 30 },
+      { "category": "Corporate Bond", "percent": 25 },
+      { "category": "Banking & PSU Debt", "percent": 15 }
+    ],
+    "C-2": [
+      { "category": "Short Duration", "percent": 55 },
+      { "category": "Arbitrage Fund", "percent": 45 }
+    ],
+    "C-3": [
+      { "category": "Corporate Bond", "percent": 40 },
+      { "category": "Short Duration", "percent": 35 },
+      { "category": "Arbitrage Fund", "percent": 25 }
+    ],
+    "C-4": [
+      { "category": "Corporate Bond", "percent": 35 },
+      { "category": "Short Duration", "percent": 30 },
+      { "category": "Arbitrage Fund", "percent": 20 },
+      { "category": "Balanced Advantage", "percent": 15 }
+    ],
+    "M-2": [
+      { "category": "Balanced Advantage", "percent": 60 },
+      { "category": "Large Cap", "percent": 40 }
+    ],
+    "M-3": [
+      { "category": "Balanced Advantage", "percent": 45 },
+      { "category": "Large Cap", "percent": 35 },
+      { "category": "Corporate Bond", "percent": 20 }
+    ],
+    "M-4": [
+      { "category": "Large Cap", "percent": 35 },
+      { "category": "Balanced Advantage", "percent": 30 },
+      { "category": "Corporate Bond", "percent": 20 },
+      { "category": "Gold ETF", "percent": 15 }
+    ],
+    "MA-3": [
+      { "category": "Flexi Cap", "percent": 45 },
+      { "category": "Large Cap", "percent": 30 },
+      { "category": "Mid Cap", "percent": 25 }
+    ],
+    "MA-4": [
+      { "category": "Flexi Cap", "percent": 35 },
+      { "category": "Large Cap", "percent": 25 },
+      { "category": "Mid Cap", "percent": 25 },
+      { "category": "Banking & PSU Debt", "percent": 15 }
+    ],
+    "A-3": [
+      { "category": "Flexi Cap", "percent": 40 },
+      { "category": "Mid Cap", "percent": 35 },
+      { "category": "Small Cap", "percent": 25 }
+    ],
+    "A-4": [
+      { "category": "Flexi Cap", "percent": 30 },
+      { "category": "Mid Cap", "percent": 30 },
+      { "category": "Small Cap", "percent": 25 },
+      { "category": "Gold ETF", "percent": 15 }
+    ]
+  }
+}

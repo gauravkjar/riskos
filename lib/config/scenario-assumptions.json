@@ -1,0 +1,17 @@
+{
+  "note": "Illustrative-only historical scenario assumptions, not live market data. Not part of the ported deterministic engine — used solely by the Portfolio Simulator to stress-test an already-computed allocation.",
+  "categoryAssumptions": {
+    "Liquid Fund": { "expectedReturn": 6.0, "volatility": 0.5, "worstCase": -0.5 },
+    "Ultra Short Duration": { "expectedReturn": 6.5, "volatility": 1.0, "worstCase": -1.0 },
+    "Corporate Bond": { "expectedReturn": 7.0, "volatility": 2.5, "worstCase": -3.0 },
+    "Short Duration": { "expectedReturn": 6.8, "volatility": 1.8, "worstCase": -2.0 },
+    "Banking & PSU Debt": { "expectedReturn": 7.0, "volatility": 2.0, "worstCase": -2.5 },
+    "Arbitrage Fund": { "expectedReturn": 6.2, "volatility": 1.2, "worstCase": -1.5 },
+    "Balanced Advantage": { "expectedReturn": 9.5, "volatility": 8.0, "worstCase": -12.0 },
+    "Large Cap": { "expectedReturn": 11.0, "volatility": 14.0, "worstCase": -30.0 },
+    "Flexi Cap": { "expectedReturn": 12.0, "volatility": 16.0, "worstCase": -33.0 },
+    "Mid Cap": { "expectedReturn": 13.5, "volatility": 20.0, "worstCase": -40.0 },
+    "Small Cap": { "expectedReturn": 15.0, "volatility": 25.0, "worstCase": -48.0 },
+    "Gold ETF": { "expectedReturn": 8.0, "volatility": 12.0, "worstCase": -15.0 }
+  }
+}

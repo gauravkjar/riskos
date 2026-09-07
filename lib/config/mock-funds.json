@@ -1,0 +1,17 @@
+{
+  "note": "Mock fund dataset for Fund Intelligence research UI. Not used by the deterministic scoring or allocation engine — allocation math only ever references category names, never individual fund identities.",
+  "funds": [
+    { "name": "Alpha Liquid Fund", "category": "Liquid Fund", "sharpe": 1.8, "sortino": 2.4, "maxDrawdown": -0.4, "expenseRatio": 0.2, "aum": 18500 },
+    { "name": "Northbridge Ultra Short Fund", "category": "Ultra Short Duration", "sharpe": 1.6, "sortino": 2.1, "maxDrawdown": -0.8, "expenseRatio": 0.3, "aum": 9200 },
+    { "name": "Meridian Corporate Bond Fund", "category": "Corporate Bond", "sharpe": 1.3, "sortino": 1.7, "maxDrawdown": -2.1, "expenseRatio": 0.45, "aum": 14300 },
+    { "name": "Anchorpoint Short Duration Fund", "category": "Short Duration", "sharpe": 1.4, "sortino": 1.9, "maxDrawdown": -1.6, "expenseRatio": 0.4, "aum": 7600 },
+    { "name": "Statecraft Banking & PSU Debt Fund", "category": "Banking & PSU Debt", "sharpe": 1.35, "sortino": 1.8, "maxDrawdown": -1.9, "expenseRatio": 0.35, "aum": 6100 },
+    { "name": "Hedgeline Arbitrage Fund", "category": "Arbitrage Fund", "sharpe": 1.5, "sortino": 2.0, "maxDrawdown": -0.9, "expenseRatio": 0.9, "aum": 11200 },
+    { "name": "Balancepoint Advantage Fund", "category": "Balanced Advantage", "sharpe": 0.95, "sortino": 1.3, "maxDrawdown": -9.5, "expenseRatio": 1.1, "aum": 22400 },
+    { "name": "Summit Large Cap Fund", "category": "Large Cap", "sharpe": 0.7, "sortino": 1.0, "maxDrawdown": -24.0, "expenseRatio": 1.2, "aum": 31200 },
+    { "name": "Horizon Flexi Cap Fund", "category": "Flexi Cap", "sharpe": 0.75, "sortino": 1.05, "maxDrawdown": -26.5, "expenseRatio": 1.3, "aum": 27800 },
+    { "name": "Vantage Mid Cap Fund", "category": "Mid Cap", "sharpe": 0.68, "sortino": 0.95, "maxDrawdown": -33.0, "expenseRatio": 1.4, "aum": 15600 },
+    { "name": "Frontier Small Cap Fund", "category": "Small Cap", "sharpe": 0.6, "sortino": 0.85, "maxDrawdown": -41.0, "expenseRatio": 1.5, "aum": 9800 },
+    { "name": "Bullion Gold ETF", "category": "Gold ETF", "sharpe": 0.9, "sortino": 1.1, "maxDrawdown": -11.0, "expenseRatio": 0.5, "aum": 5400 }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "modelVersion": "1.0",
+  "source": "MF_Risk_Engine.xlsx — Sheet 6 & 7 (available basket sizes per band)",
+  "availableBasketSizesByBand": {
+    "VC": [2, 3, 4],
+    "C": [2, 3, 4],
+    "M": [2, 3, 4],
+    "MA": [3, 4],
+    "A": [3, 4]
+  },
+  "defaultBasketSizeByBand": {
+    "VC": 3,
+    "C": 3,
+    "M": 3,
+    "MA": 3,
+    "A": 3
+  }
+}

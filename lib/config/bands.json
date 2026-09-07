@@ -1,0 +1,11 @@
+{
+  "modelVersion": "1.0",
+  "source": "MF_Risk_Engine.xlsx — Sheet 5. Risk Bucket Mapping",
+  "bands": [
+    { "code": "VC", "label": "Very Conservative", "min": 0, "max": 20 },
+    { "code": "C", "label": "Conservative", "min": 21, "max": 40 },
+    { "code": "M", "label": "Moderate", "min": 41, "max": 60 },
+    { "code": "MA", "label": "Moderately Aggressive", "min": 61, "max": 80 },
+    { "code": "A", "label": "Aggressive", "min": 81, "max": 100 }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "modelVersion": "1.0",
+  "source": "MF_Risk_Engine.xlsx — Sheet 3. Weight Config",
+  "capacityWeights": {
+    "horizon": 0.7,
+    "income": 0.3
+  },
+  "stageBlend": {
+    "stage1": 0.65,
+    "stage2": 0.35
+  },
+  "neutralToleranceAnchor": 50,
+  "questionScores": {
+    "horizon": {
+      "lessThan1Year": 5,
+      "oneToThreeYears": 35,
+      "threeToSevenYears": 70,
+      "sevenPlusYears": 100
+    },
+    "drawdownReaction": {
+      "sellAll": 0,
+      "sellPortion": 35,
+      "hold": 70,
+      "buyMore": 100
+    },
+    "incomeStability": {
+      "irregular": 10,
+      "oneSalary": 40,
+      "twoIncomes": 70,
+      "multipleOrBusiness": 100
+    }
+  },
+  "trustFactor": {
+    "fdOnly": 0.5,
+    "fewSips": 0.7,
+    "twoPlusYears": 0.9,
+    "veryActive": 1.0
+  },
+  "liquidityCap": {
+    "needIn12Months": 40,
+    "mayNeedSome": 70,
+    "flexible": 100,
+    "otherInvestments": 100
+  }
+}
