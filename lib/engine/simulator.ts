@@ -147,7 +147,10 @@ const NIFTY_500_CATEGORY = "Nifty 500";
  * Nifty 500 index itself (100% weight) rather than a user's fund allocation —
  * an illustrative benchmark line so investors can see their portfolio's
  * scenario outcome next to the broad market's. Nifty 500 figures are
- * approximate, general-knowledge historical ballparks, not live-sourced.
+ * approximate, general-knowledge historical averages for a holding period of
+ * the given length (not a reference to any single specific past year), not
+ * live-sourced, and kept independent of the per-category fund assumptions
+ * used elsewhere in this file.
  */
 export function simulateNifty500Benchmark(
   amount: number,

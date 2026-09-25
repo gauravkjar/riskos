@@ -191,9 +191,10 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
             These figures are illustrative projections based on historical,
             simplified assumptions — they are not guaranteed and actual returns
             can differ significantly. This is not investment advice. The Nifty
-            500 benchmark figures are approximate, general-knowledge historical
-            ballparks used to anchor these assumptions — they are not
-            live-sourced market data.
+            500 benchmark shows an approximate, general-knowledge typical/average
+            outcome for a holding period of this length (not any single past
+            year) — it is a separate comparison line, not live-sourced market
+            data, and isn&apos;t used to derive the fund category assumptions above.
           </p>
         </div>
       ) : (
