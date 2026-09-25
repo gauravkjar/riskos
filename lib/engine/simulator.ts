@@ -58,14 +58,34 @@ export const SCENARIO_NAMES = [
 
 export type ScenarioName = (typeof SCENARIO_NAMES)[number];
 
+const NORMAL_SCENARIO = "Normal market";
+
+function weightedReturnPct(
+  lines: AllocationLine[],
+  categoryAssumptions: Record<string, { return: number }>
+): number {
+  let pct = 0;
+  for (const line of lines) {
+    const a = categoryAssumptions[line.category];
+    if (!a) continue;
+    pct += a.return * (line.percent / 100);
+  }
+  return Math.round(pct * 10) / 10;
+}
+
 /**
  * Computes an illustrative outcome for `lines` under a single named scenario
- * (Normal market / Market correction / Severe downturn / Crisis / Recovery),
- * using the per-category `return` figures in `scenario-assumptions.json`'s
- * `scenarios[scenarioName].categoryAssumptions` as an annual return, then
- * compounding it over `years` (default 1). Categories with no assumption
- * entry for the scenario are skipped (weighted return simply omits them),
- * mirroring the existing `simulatePortfolio` behavior.
+ * (Normal market / Market correction / Severe downturn / Crisis / Recovery)
+ * over a holding period of `years` (default 1).
+ *
+ * The figures in `scenario-assumptions.json` describe a one-off shock year,
+ * not a sustained annual rate — a "Crisis" doesn't recur every year for a
+ * decade. So the shock is applied once, in year 1, and the portfolio is
+ * assumed to revert to the "Normal market" return for any remaining years.
+ * This tapers both the downside and the upside as the horizon lengthens,
+ * instead of compounding an extreme single-year move repeatedly. For the
+ * "Normal market" scenario itself this is equivalent to compounding the
+ * normal return every year, since there is no separate shock to apply once.
  */
 export function simulateScenario(
   lines: AllocationLine[],
@@ -81,19 +101,17 @@ export function simulateScenario(
   if (!scenario) {
     throw new Error(`Unknown simulation scenario: ${scenarioName}`);
   }
-  const assumptions = scenario.categoryAssumptions;
+  const normalScenario = scenarios[NORMAL_SCENARIO];
 
-  let annualChangePct = 0;
-  for (const line of lines) {
-    const a = assumptions[line.category];
-    if (!a) continue;
-    const weight = line.percent / 100;
-    annualChangePct += a.return * weight;
-  }
+  const shockPct = weightedReturnPct(lines, scenario.categoryAssumptions);
+  const normalPct =
+    scenarioName === NORMAL_SCENARIO || !normalScenario
+      ? shockPct
+      : weightedReturnPct(lines, normalScenario.categoryAssumptions);
 
-  annualChangePct = Math.round(annualChangePct * 10) / 10;
-
-  const growthFactor = Math.pow(1 + annualChangePct / 100, years);
+  const remainingYears = Math.max(years - 1, 0);
+  const growthFactor =
+    (1 + shockPct / 100) * Math.pow(1 + normalPct / 100, remainingYears);
 
   return {
     scenario: scenarioName,

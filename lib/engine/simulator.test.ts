@@ -8,6 +8,7 @@ describe("simulateScenario", () => {
     { category: "Mid Cap", percent: 35 },
     { category: "Small Cap", percent: 25 },
   ];
+  const amount = 100000;
 
   it("returns all 5 named scenarios", () => {
     const results = SCENARIO_NAMES.map((name) =>
@@ -34,7 +35,7 @@ describe("simulateScenario", () => {
     expect(() => simulateScenario(equityHeavy, 100000, "Not a scenario")).toThrow();
   });
 
-  it("compounds the annual return over the given horizon instead of returning a flat one-year figure", () => {
+  it("compounds Normal market's own return over the given horizon, since it has no separate shock to revert from", () => {
     const oneYear = simulateScenario(equityHeavy, 100000, "Normal market", 1);
     const fiveYear = simulateScenario(equityHeavy, 100000, "Normal market", 5);
     expect(fiveYear.valueAfter).toBeGreaterThan(oneYear.valueAfter);
@@ -48,5 +49,22 @@ describe("simulateScenario", () => {
     const withDefault = simulateScenario(equityHeavy, 100000, "Normal market");
     const explicitOne = simulateScenario(equityHeavy, 100000, "Normal market", 1);
     expect(withDefault).toEqual(explicitOne);
+  });
+
+  it("tapers a shock scenario's downside/upside over a longer horizon instead of compounding the shock every year", () => {
+    const oneYearCrisis = simulateScenario(equityHeavy, 100000, "Crisis", 1);
+    const tenYearCrisis = simulateScenario(equityHeavy, 100000, "Crisis", 10);
+    // A 10-year holder absorbs the crisis once, then reverts to normal
+    // growth — so the loss should shrink drastically, not compound to
+    // near-zero.
+    expect(tenYearCrisis.changePct).toBeGreaterThan(oneYearCrisis.changePct);
+    expect(tenYearCrisis.valueAfter).toBeGreaterThan(amount * 0.5);
+
+    const oneYearRecovery = simulateScenario(equityHeavy, 100000, "Recovery", 1);
+    const tenYearRecovery = simulateScenario(equityHeavy, 100000, "Recovery", 10);
+    // Likewise the recovery-year pop shouldn't compound every year either.
+    const recoveryFactor1yr = oneYearRecovery.valueAfter / amount;
+    const recoveryFactor10yr = tenYearRecovery.valueAfter / amount;
+    expect(recoveryFactor10yr).toBeLessThan(Math.pow(recoveryFactor1yr, 10));
   });
 });
