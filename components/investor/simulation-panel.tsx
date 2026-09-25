@@ -25,6 +25,22 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
+// Heatmap cell coloring: intensity scales with |changePct| relative to the
+// widest swing across the current result set, so the worst loss and the
+// best gain are always at full saturation and everything else scales
+// between. Losses shade red, gains shade green, near-zero stays neutral.
+const HEATMAP_CAP_PCT = 60;
+
+function heatmapStyle(changePct: number): React.CSSProperties {
+  const intensity = Math.min(Math.abs(changePct) / HEATMAP_CAP_PCT, 1);
+  const alpha = 0.08 + intensity * 0.34;
+  const color = changePct >= 0 ? `34, 211, 153` : `248, 113, 113`;
+  return {
+    backgroundColor: `rgba(${color}, ${alpha})`,
+    borderColor: `rgba(${color}, ${0.2 + intensity * 0.4})`,
+  };
+}
+
 export function SimulationPanel({ allocationLines }: { allocationLines: AllocationLine[] }) {
   const [amount, setAmount] = useState(100000);
   const [horizon, setHorizon] = useState("5");
@@ -130,7 +146,8 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
             {results.map((r) => (
               <div
                 key={r.scenario}
-                className="rounded-md border border-border bg-surface-raised p-4"
+                style={heatmapStyle(r.changePct)}
+                className="rounded-md border p-4 transition-colors"
               >
                 <p className="text-sm font-medium text-foreground">{r.scenario}</p>
                 <p className="mt-2 font-mono text-2xl tabular text-accent-strong">
