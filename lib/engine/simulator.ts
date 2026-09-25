@@ -59,19 +59,19 @@ export const SCENARIO_NAMES = [
 export type ScenarioName = (typeof SCENARIO_NAMES)[number];
 
 /**
- * Computes a one-year illustrative outcome for `lines` under a single named
- * scenario (Normal market / Market correction / Severe downturn / Crisis /
- * Recovery), using the per-category `return` figures in
- * `scenario-assumptions.json`'s `scenarios[scenarioName].categoryAssumptions`.
- * Additive to `simulatePortfolio` — does not change its behavior or
- * signature. Categories with no assumption entry for the scenario are
- * skipped (weighted return simply omits them), mirroring the existing
- * `simulatePortfolio` behavior.
+ * Computes an illustrative outcome for `lines` under a single named scenario
+ * (Normal market / Market correction / Severe downturn / Crisis / Recovery),
+ * using the per-category `return` figures in `scenario-assumptions.json`'s
+ * `scenarios[scenarioName].categoryAssumptions` as an annual return, then
+ * compounding it over `years` (default 1). Categories with no assumption
+ * entry for the scenario are skipped (weighted return simply omits them),
+ * mirroring the existing `simulatePortfolio` behavior.
  */
 export function simulateScenario(
   lines: AllocationLine[],
   amount: number,
-  scenarioName: string
+  scenarioName: string,
+  years: number = 1
 ): NamedScenarioResult {
   const scenarios = scenarioAssumptions.scenarios as Record<
     string,
@@ -83,19 +83,21 @@ export function simulateScenario(
   }
   const assumptions = scenario.categoryAssumptions;
 
-  let changePct = 0;
+  let annualChangePct = 0;
   for (const line of lines) {
     const a = assumptions[line.category];
     if (!a) continue;
     const weight = line.percent / 100;
-    changePct += a.return * weight;
+    annualChangePct += a.return * weight;
   }
 
-  changePct = Math.round(changePct * 10) / 10;
+  annualChangePct = Math.round(annualChangePct * 10) / 10;
+
+  const growthFactor = Math.pow(1 + annualChangePct / 100, years);
 
   return {
     scenario: scenarioName,
-    valueAfter: Math.round(amount * (1 + changePct / 100)),
-    changePct,
+    valueAfter: Math.round(amount * growthFactor),
+    changePct: Math.round((growthFactor - 1) * 1000) / 10,
   };
 }

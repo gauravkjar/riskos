@@ -31,14 +31,14 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function runSimulation() {
+  async function runSimulation(horizonOverride?: string) {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount, years: Number(horizonOverride ?? horizon) }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -84,15 +84,19 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
               step={1000}
               value={amount}
               onChange={(e) => setAmount(Number(e.target.value) || 0)}
-              onBlur={runSimulation}
+              onBlur={() => runSimulation()}
               className="rounded-md border border-border bg-surface-raised px-3 py-2 text-foreground outline-none focus:border-accent/50"
             />
           </label>
           <label className="flex flex-col gap-1.5 text-sm text-muted">
-            Horizon (illustrative only)
+            Horizon
             <select
               value={horizon}
-              onChange={(e) => setHorizon(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                setHorizon(next);
+                if (results) runSimulation(next);
+              }}
               className="rounded-md border border-border bg-surface-raised px-3 py-2 text-foreground outline-none focus:border-accent/50"
             >
               {HORIZON_OPTIONS.map((opt) => (
@@ -106,7 +110,7 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
 
         <button
           type="button"
-          onClick={runSimulation}
+          onClick={() => runSimulation()}
           disabled={loading}
           className="mt-6 rounded-md border border-accent/30 bg-accent/10 px-4 py-2 text-sm text-accent-strong hover:bg-accent/15 disabled:opacity-50"
         >

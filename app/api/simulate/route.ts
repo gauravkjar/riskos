@@ -14,13 +14,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
 
-    const { amount } = (body ?? {}) as { amount?: unknown };
+    const { amount, years } = (body ?? {}) as { amount?: unknown; years?: unknown };
     if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json(
         { error: "amount is required and must be a positive number." },
         { status: 400 }
       );
     }
+    const horizonYears =
+      typeof years === "number" && Number.isFinite(years) && years > 0 ? years : 1;
 
     const assessments = await getAssessmentsByUser(user.id);
     const latest = assessments[0];
@@ -36,10 +38,10 @@ export async function POST(request: Request) {
     const lines = latest.run.allocationLines;
 
     const scenarios = SCENARIO_NAMES.map((name) =>
-      simulateScenario(lines, amount, name)
+      simulateScenario(lines, amount, name, horizonYears)
     );
 
-    return NextResponse.json({ amount, allocationLines: lines, scenarios });
+    return NextResponse.json({ amount, years: horizonYears, allocationLines: lines, scenarios });
   } catch (err) {
     if (err instanceof HttpError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
