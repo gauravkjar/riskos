@@ -1,5 +1,15 @@
 {
   "note": "Illustrative-only historical scenario assumptions, not live market data. Not part of the ported deterministic engine — used solely by the Portfolio Simulator to stress-test an already-computed allocation.",
+  "benchmarkNote": "Nifty 500 figures are approximate, general-knowledge historical ballparks (not fetched live from niftyindices.com or any other source — that site was unreachable from this environment). They anchor the equity category assumptions below and power the 'Nifty 500 (benchmark)' comparison in the Portfolio Simulator. Treat as illustrative only, not investment advice.",
+  "niftyBenchmarkCategory": "Nifty 500",
+  "equityBetaToNifty500": {
+    "note": "Equity-oriented category returns in each scenario below are documented as Nifty 500's scenario return for that period multiplied by this beta, then rounded — not independently invented.",
+    "Large Cap": 0.9,
+    "Flexi Cap": 1.0,
+    "Mid Cap": 1.2,
+    "Small Cap": 1.5,
+    "Balanced Advantage": 0.6
+  },
   "categoryAssumptions": {
     "Liquid Fund": { "expectedReturn": 6.0, "volatility": 0.5, "worstCase": -0.5 },
     "Ultra Short Duration": { "expectedReturn": 6.5, "volatility": 1.0, "worstCase": -1.0 },
@@ -7,12 +17,13 @@
     "Short Duration": { "expectedReturn": 6.8, "volatility": 1.8, "worstCase": -2.0 },
     "Banking & PSU Debt": { "expectedReturn": 7.0, "volatility": 2.0, "worstCase": -2.5 },
     "Arbitrage Fund": { "expectedReturn": 6.2, "volatility": 1.2, "worstCase": -1.5 },
-    "Balanced Advantage": { "expectedReturn": 9.5, "volatility": 8.0, "worstCase": -12.0 },
-    "Large Cap": { "expectedReturn": 11.0, "volatility": 14.0, "worstCase": -30.0 },
-    "Flexi Cap": { "expectedReturn": 12.0, "volatility": 16.0, "worstCase": -33.0 },
-    "Mid Cap": { "expectedReturn": 13.5, "volatility": 20.0, "worstCase": -40.0 },
-    "Small Cap": { "expectedReturn": 15.0, "volatility": 25.0, "worstCase": -48.0 },
-    "Gold ETF": { "expectedReturn": 8.0, "volatility": 12.0, "worstCase": -15.0 }
+    "Balanced Advantage": { "expectedReturn": 7.8, "volatility": 11.4, "worstCase": -24.0 },
+    "Large Cap": { "expectedReturn": 11.7, "volatility": 17.1, "worstCase": -36.0 },
+    "Flexi Cap": { "expectedReturn": 13.0, "volatility": 19.0, "worstCase": -40.0 },
+    "Mid Cap": { "expectedReturn": 15.6, "volatility": 22.8, "worstCase": -48.0 },
+    "Small Cap": { "expectedReturn": 19.5, "volatility": 28.5, "worstCase": -60.0 },
+    "Gold ETF": { "expectedReturn": 8.0, "volatility": 12.0, "worstCase": -15.0 },
+    "Nifty 500": { "expectedReturn": 13.0, "volatility": 19.0, "worstCase": -40.0 }
   },
   "scenarios": {
     "Normal market": {
@@ -23,12 +34,13 @@
         "Short Duration": { "return": 6.8 },
         "Banking & PSU Debt": { "return": 7.0 },
         "Arbitrage Fund": { "return": 6.2 },
-        "Balanced Advantage": { "return": 9.5 },
-        "Large Cap": { "return": 11.0 },
-        "Flexi Cap": { "return": 12.0 },
-        "Mid Cap": { "return": 13.5 },
-        "Small Cap": { "return": 15.0 },
-        "Gold ETF": { "return": 8.0 }
+        "Balanced Advantage": { "return": 7.8 },
+        "Large Cap": { "return": 11.7 },
+        "Flexi Cap": { "return": 13.0 },
+        "Mid Cap": { "return": 15.6 },
+        "Small Cap": { "return": 19.5 },
+        "Gold ETF": { "return": 8.0 },
+        "Nifty 500": { "return": 13.0 }
       }
     },
     "Market correction": {
@@ -39,12 +51,13 @@
         "Short Duration": { "return": 4.5 },
         "Banking & PSU Debt": { "return": 4.2 },
         "Arbitrage Fund": { "return": 5.0 },
-        "Balanced Advantage": { "return": -4.0 },
-        "Large Cap": { "return": -10.0 },
+        "Balanced Advantage": { "return": -6.6 },
+        "Large Cap": { "return": -9.9 },
         "Flexi Cap": { "return": -11.0 },
-        "Mid Cap": { "return": -14.0 },
-        "Small Cap": { "return": -18.0 },
-        "Gold ETF": { "return": 6.0 }
+        "Mid Cap": { "return": -13.2 },
+        "Small Cap": { "return": -16.5 },
+        "Gold ETF": { "return": 6.0 },
+        "Nifty 500": { "return": -11.0 }
       }
     },
     "Severe downturn": {
@@ -55,12 +68,13 @@
         "Short Duration": { "return": 1.5 },
         "Banking & PSU Debt": { "return": 1.0 },
         "Arbitrage Fund": { "return": 3.5 },
-        "Balanced Advantage": { "return": -12.0 },
-        "Large Cap": { "return": -25.0 },
-        "Flexi Cap": { "return": -27.0 },
-        "Mid Cap": { "return": -33.0 },
-        "Small Cap": { "return": -40.0 },
-        "Gold ETF": { "return": 10.0 }
+        "Balanced Advantage": { "return": -16.8 },
+        "Large Cap": { "return": -25.2 },
+        "Flexi Cap": { "return": -28.0 },
+        "Mid Cap": { "return": -33.6 },
+        "Small Cap": { "return": -42.0 },
+        "Gold ETF": { "return": 10.0 },
+        "Nifty 500": { "return": -28.0 }
       }
     },
     "Crisis": {
@@ -71,12 +85,13 @@
         "Short Duration": { "return": -1.0 },
         "Banking & PSU Debt": { "return": -2.0 },
         "Arbitrage Fund": { "return": 1.5 },
-        "Balanced Advantage": { "return": -20.0 },
-        "Large Cap": { "return": -38.0 },
-        "Flexi Cap": { "return": -41.0 },
+        "Balanced Advantage": { "return": -24.0 },
+        "Large Cap": { "return": -36.0 },
+        "Flexi Cap": { "return": -40.0 },
         "Mid Cap": { "return": -48.0 },
-        "Small Cap": { "return": -55.0 },
-        "Gold ETF": { "return": 16.0 }
+        "Small Cap": { "return": -60.0 },
+        "Gold ETF": { "return": 16.0 },
+        "Nifty 500": { "return": -40.0 }
       }
     },
     "Recovery": {
@@ -87,12 +102,13 @@
         "Short Duration": { "return": 8.0 },
         "Banking & PSU Debt": { "return": 8.2 },
         "Arbitrage Fund": { "return": 7.0 },
-        "Balanced Advantage": { "return": 16.0 },
-        "Large Cap": { "return": 22.0 },
-        "Flexi Cap": { "return": 25.0 },
-        "Mid Cap": { "return": 30.0 },
-        "Small Cap": { "return": 36.0 },
-        "Gold ETF": { "return": 2.0 }
+        "Balanced Advantage": { "return": 15.6 },
+        "Large Cap": { "return": 23.4 },
+        "Flexi Cap": { "return": 26.0 },
+        "Mid Cap": { "return": 31.2 },
+        "Small Cap": { "return": 39.0 },
+        "Gold ETF": { "return": 2.0 },
+        "Nifty 500": { "return": 26.0 }
       }
     }
   }

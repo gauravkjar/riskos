@@ -45,6 +45,7 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
   const [amount, setAmount] = useState(100000);
   const [horizon, setHorizon] = useState("5");
   const [results, setResults] = useState<ScenarioResult[] | null>(null);
+  const [benchmark, setBenchmark] = useState<ScenarioResult[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +63,7 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
         throw new Error(data.error ?? "Unable to run simulation.");
       }
       setResults(data.scenarios);
+      setBenchmark(data.benchmark ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to run simulation.");
     } finally {
@@ -143,39 +145,55 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
             Scenario outcomes over {horizon} year{horizon === "1" ? "" : "s"}
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            {results.map((r) => (
-              <div
-                key={r.scenario}
-                style={heatmapStyle(r.changePct)}
-                className="rounded-md border p-4 transition-colors"
-              >
-                <p className="text-sm font-medium text-foreground">{r.scenario}</p>
-                <p className="mt-2 font-mono text-2xl tabular text-accent-strong">
-                  {formatCurrency(r.valueAfter)}
-                </p>
-                <p
-                  className={`mt-1 text-sm tabular ${
-                    r.changePct >= 0 ? "text-accent-strong" : "text-red-400"
-                  }`}
+            {results.map((r) => {
+              const bm = benchmark?.find((b) => b.scenario === r.scenario);
+              return (
+                <div
+                  key={r.scenario}
+                  style={heatmapStyle(r.changePct)}
+                  className="rounded-md border p-4 transition-colors"
                 >
-                  {r.changePct >= 0 ? "+" : ""}
-                  {r.changePct}% absolute
-                </p>
-                <p
-                  className={`mt-0.5 text-xs tabular ${
-                    r.cagrPct >= 0 ? "text-muted" : "text-red-400/80"
-                  }`}
-                >
-                  {r.cagrPct >= 0 ? "+" : ""}
-                  {r.cagrPct}% CAGR
-                </p>
-              </div>
-            ))}
+                  <p className="text-sm font-medium text-foreground">{r.scenario}</p>
+                  <p className="mt-2 font-mono text-2xl tabular text-accent-strong">
+                    {formatCurrency(r.valueAfter)}
+                  </p>
+                  <p
+                    className={`mt-1 text-sm tabular ${
+                      r.changePct >= 0 ? "text-accent-strong" : "text-red-400"
+                    }`}
+                  >
+                    {r.changePct >= 0 ? "+" : ""}
+                    {r.changePct}% absolute
+                  </p>
+                  <p
+                    className={`mt-0.5 text-xs tabular ${
+                      r.cagrPct >= 0 ? "text-muted" : "text-red-400/80"
+                    }`}
+                  >
+                    {r.cagrPct >= 0 ? "+" : ""}
+                    {r.cagrPct}% CAGR
+                  </p>
+                  {bm ? (
+                    <p className="mt-2 border-t border-border/60 pt-2 text-xs tabular text-muted-2">
+                      Nifty 500 (benchmark):{" "}
+                      <span className={bm.changePct >= 0 ? "text-muted" : "text-red-400/80"}>
+                        {bm.changePct >= 0 ? "+" : ""}
+                        {bm.changePct}% abs / {bm.cagrPct >= 0 ? "+" : ""}
+                        {bm.cagrPct}% CAGR
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
           <p className="mt-6 text-xs text-muted-2">
             These figures are illustrative projections based on historical,
             simplified assumptions — they are not guaranteed and actual returns
-            can differ significantly. This is not investment advice.
+            can differ significantly. This is not investment advice. The Nifty
+            500 benchmark figures are approximate, general-knowledge historical
+            ballparks used to anchor these assumptions — they are not
+            live-sourced market data.
           </p>
         </div>
       ) : (

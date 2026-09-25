@@ -90,11 +90,11 @@ function weightedReturnPct(
  * "Normal market" scenario itself this is equivalent to compounding the
  * normal return every year, since there is no separate shock to apply once.
  */
-export function simulateScenario(
-  lines: AllocationLine[],
-  amount: number,
+function simulateWeighted(
+  weightedPctFor: (categoryAssumptions: Record<string, { return: number }>) => number,
   scenarioName: string,
-  years: number = 1
+  amount: number,
+  years: number
 ): NamedScenarioResult {
   const scenarios = scenarioAssumptions.scenarios as Record<
     string,
@@ -106,11 +106,11 @@ export function simulateScenario(
   }
   const normalScenario = scenarios[NORMAL_SCENARIO];
 
-  const shockPct = weightedReturnPct(lines, scenario.categoryAssumptions);
+  const shockPct = weightedPctFor(scenario.categoryAssumptions);
   const normalPct =
     scenarioName === NORMAL_SCENARIO || !normalScenario
       ? shockPct
-      : weightedReturnPct(lines, normalScenario.categoryAssumptions);
+      : weightedPctFor(normalScenario.categoryAssumptions);
 
   const remainingYears = Math.max(years - 1, 0);
   const growthFactor =
@@ -124,4 +124,40 @@ export function simulateScenario(
     changePct: Math.round((growthFactor - 1) * 1000) / 10,
     cagrPct: Math.round(cagr * 1000) / 10,
   };
+}
+
+export function simulateScenario(
+  lines: AllocationLine[],
+  amount: number,
+  scenarioName: string,
+  years: number = 1
+): NamedScenarioResult {
+  return simulateWeighted(
+    (categoryAssumptions) => weightedReturnPct(lines, categoryAssumptions),
+    scenarioName,
+    amount,
+    years
+  );
+}
+
+const NIFTY_500_CATEGORY = "Nifty 500";
+
+/**
+ * Same shock-then-revert model as `simulateScenario`, but applied to the
+ * Nifty 500 index itself (100% weight) rather than a user's fund allocation —
+ * an illustrative benchmark line so investors can see their portfolio's
+ * scenario outcome next to the broad market's. Nifty 500 figures are
+ * approximate, general-knowledge historical ballparks, not live-sourced.
+ */
+export function simulateNifty500Benchmark(
+  amount: number,
+  scenarioName: string,
+  years: number = 1
+): NamedScenarioResult {
+  return simulateWeighted(
+    (categoryAssumptions) => categoryAssumptions[NIFTY_500_CATEGORY]?.return ?? 0,
+    scenarioName,
+    amount,
+    years
+  );
 }

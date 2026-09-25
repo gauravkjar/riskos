@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { simulateScenario, SCENARIO_NAMES } from "@/lib/engine/simulator";
+import {
+  simulateScenario,
+  simulateNifty500Benchmark,
+  SCENARIO_NAMES,
+} from "@/lib/engine/simulator";
 import type { AllocationLine } from "@/lib/engine/types";
 
 describe("simulateScenario", () => {
@@ -76,5 +80,44 @@ describe("simulateScenario", () => {
     const impliedGrowthFactor = Math.pow(1 + tenYear.cagrPct / 100, 10);
     const expectedValue = Math.round(amount * impliedGrowthFactor);
     expect(Math.abs(expectedValue - tenYear.valueAfter)).toBeLessThan(amount * 0.01);
+  });
+});
+
+describe("simulateNifty500Benchmark", () => {
+  const amount = 100000;
+
+  it("returns all 5 named scenarios", () => {
+    const results = SCENARIO_NAMES.map((name) =>
+      simulateNifty500Benchmark(amount, name)
+    );
+    expect(results.map((r) => r.scenario)).toEqual([...SCENARIO_NAMES]);
+  });
+
+  it("is negative in Crisis and positive in Normal market/Recovery", () => {
+    const normal = simulateNifty500Benchmark(amount, "Normal market");
+    const crisis = simulateNifty500Benchmark(amount, "Crisis");
+    const recovery = simulateNifty500Benchmark(amount, "Recovery");
+    expect(normal.changePct).toBeGreaterThan(0);
+    expect(crisis.changePct).toBeLessThan(0);
+    expect(recovery.changePct).toBeGreaterThan(normal.changePct);
+  });
+
+  it("tapers over a longer horizon the same way the portfolio simulation does", () => {
+    const oneYearCrisis = simulateNifty500Benchmark(amount, "Crisis", 1);
+    const tenYearCrisis = simulateNifty500Benchmark(amount, "Crisis", 10);
+    expect(tenYearCrisis.changePct).toBeGreaterThan(oneYearCrisis.changePct);
+    expect(tenYearCrisis.valueAfter).toBeGreaterThan(amount * 0.5);
+  });
+
+  it("is independent of the allocation lines passed to simulateScenario", () => {
+    const equityHeavy = [{ category: "Small Cap", percent: 100 }];
+    const debtHeavy = [{ category: "Liquid Fund", percent: 100 }];
+    const bm1 = simulateNifty500Benchmark(amount, "Crisis", 5);
+    const bm2 = simulateNifty500Benchmark(amount, "Crisis", 5);
+    expect(bm1).toEqual(bm2);
+    // sanity: portfolio-specific simulation still differs from the benchmark
+    const portfolio = simulateScenario(equityHeavy, amount, "Crisis", 5);
+    const debtPortfolio = simulateScenario(debtHeavy, amount, "Crisis", 5);
+    expect(portfolio.changePct).not.toBe(debtPortfolio.changePct);
   });
 });

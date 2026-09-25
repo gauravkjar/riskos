@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireUser, HttpError } from "@/lib/auth/require";
 import { getAssessmentsByUser } from "@/lib/db/store";
-import { simulateScenario, SCENARIO_NAMES } from "@/lib/engine/simulator";
+import {
+  simulateScenario,
+  simulateNifty500Benchmark,
+  SCENARIO_NAMES,
+} from "@/lib/engine/simulator";
 
 export async function POST(request: Request) {
   try {
@@ -40,8 +44,17 @@ export async function POST(request: Request) {
     const scenarios = SCENARIO_NAMES.map((name) =>
       simulateScenario(lines, amount, name, horizonYears)
     );
+    const benchmark = SCENARIO_NAMES.map((name) =>
+      simulateNifty500Benchmark(amount, name, horizonYears)
+    );
 
-    return NextResponse.json({ amount, years: horizonYears, allocationLines: lines, scenarios });
+    return NextResponse.json({
+      amount,
+      years: horizonYears,
+      allocationLines: lines,
+      scenarios,
+      benchmark,
+    });
   } catch (err) {
     if (err instanceof HttpError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
