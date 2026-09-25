@@ -175,7 +175,7 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
                   </p>
                   {bm ? (
                     <p className="mt-2 border-t border-border/60 pt-2 text-xs tabular text-muted-2">
-                      Nifty 500 (benchmark):{" "}
+                      Index benchmark (same categories):{" "}
                       <span className={bm.changePct >= 0 ? "text-muted" : "text-red-400/80"}>
                         {bm.changePct >= 0 ? "+" : ""}
                         {bm.changePct}% abs / {bm.cagrPct >= 0 ? "+" : ""}
@@ -190,11 +190,13 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
           <p className="mt-6 text-xs text-muted-2">
             These figures are illustrative projections based on historical,
             simplified assumptions — they are not guaranteed and actual returns
-            can differ significantly. This is not investment advice. The Nifty
-            500 benchmark shows an approximate, general-knowledge typical/average
-            outcome for a holding period of this length (not any single past
-            year) — it is a separate comparison line, not live-sourced market
-            data, and isn&apos;t used to derive the fund category assumptions above.
+            can differ significantly. This is not investment advice. The index
+            benchmark blends each held category&apos;s typical passive-index
+            return (e.g. Nifty 100 for Large Cap, Nifty Midcap 150 for Mid Cap)
+            using this same portfolio&apos;s category weights, so it always
+            reflects the categories actually held. These are approximate,
+            general-knowledge historical averages for a holding period of this
+            length (not any single past year), not live-sourced market data.
           </p>
         </div>
       ) : (

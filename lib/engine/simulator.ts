@@ -63,15 +63,22 @@ export type ScenarioName = (typeof SCENARIO_NAMES)[number];
 
 const NORMAL_SCENARIO = "Normal market";
 
+type CategoryScenarioReturns = Record<
+  string,
+  { return: number; benchmarkReturn?: number }
+>;
+
 function weightedReturnPct(
   lines: AllocationLine[],
-  categoryAssumptions: Record<string, { return: number }>
+  categoryAssumptions: CategoryScenarioReturns,
+  field: "return" | "benchmarkReturn" = "return"
 ): number {
   let pct = 0;
   for (const line of lines) {
     const a = categoryAssumptions[line.category];
     if (!a) continue;
-    pct += a.return * (line.percent / 100);
+    const value = field === "benchmarkReturn" ? a.benchmarkReturn ?? a.return : a.return;
+    pct += value * (line.percent / 100);
   }
   return Math.round(pct * 10) / 10;
 }
@@ -91,14 +98,14 @@ function weightedReturnPct(
  * normal return every year, since there is no separate shock to apply once.
  */
 function simulateWeighted(
-  weightedPctFor: (categoryAssumptions: Record<string, { return: number }>) => number,
+  weightedPctFor: (categoryAssumptions: CategoryScenarioReturns) => number,
   scenarioName: string,
   amount: number,
   years: number
 ): NamedScenarioResult {
   const scenarios = scenarioAssumptions.scenarios as Record<
     string,
-    { categoryAssumptions: Record<string, { return: number }> }
+    { categoryAssumptions: CategoryScenarioReturns }
   >;
   const scenario = scenarios[scenarioName];
   if (!scenario) {
@@ -140,25 +147,26 @@ export function simulateScenario(
   );
 }
 
-const NIFTY_500_CATEGORY = "Nifty 500";
-
 /**
- * Same shock-then-revert model as `simulateScenario`, but applied to the
- * Nifty 500 index itself (100% weight) rather than a user's fund allocation —
- * an illustrative benchmark line so investors can see their portfolio's
- * scenario outcome next to the broad market's. Nifty 500 figures are
- * approximate, general-knowledge historical averages for a holding period of
- * the given length (not a reference to any single specific past year), not
- * live-sourced, and kept independent of the per-category fund assumptions
- * used elsewhere in this file.
+ * Same shock-then-revert model as `simulateScenario`, but using each held
+ * category's passive-index `benchmarkReturn` instead of its active-fund
+ * `return`, weighted by the SAME allocation `lines` as the portfolio being
+ * compared against. This means the benchmark always reflects the categories
+ * actually held (e.g. a Flexi/Large/Mid Cap portfolio benchmarks against a
+ * Flexi/Large/Mid Cap index blend) rather than a single flat index applied
+ * regardless of composition. Benchmark figures are approximate,
+ * general-knowledge historical averages for a holding period of the given
+ * length (not a reference to any single specific past year) and are not
+ * live-sourced.
  */
-export function simulateNifty500Benchmark(
+export function simulateBenchmark(
+  lines: AllocationLine[],
   amount: number,
   scenarioName: string,
   years: number = 1
 ): NamedScenarioResult {
   return simulateWeighted(
-    (categoryAssumptions) => categoryAssumptions[NIFTY_500_CATEGORY]?.return ?? 0,
+    (categoryAssumptions) => weightedReturnPct(lines, categoryAssumptions, "benchmarkReturn"),
     scenarioName,
     amount,
     years

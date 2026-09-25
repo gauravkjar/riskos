@@ -3,7 +3,7 @@ import { requireUser, HttpError } from "@/lib/auth/require";
 import { getAssessmentsByUser } from "@/lib/db/store";
 import {
   simulateScenario,
-  simulateNifty500Benchmark,
+  simulateBenchmark,
   SCENARIO_NAMES,
 } from "@/lib/engine/simulator";
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
       simulateScenario(lines, amount, name, horizonYears)
     );
     const benchmark = SCENARIO_NAMES.map((name) =>
-      simulateNifty500Benchmark(amount, name, horizonYears)
+      simulateBenchmark(lines, amount, name, horizonYears)
     );
 
     return NextResponse.json({
