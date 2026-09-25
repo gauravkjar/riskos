@@ -67,4 +67,14 @@ describe("simulateScenario", () => {
     const recoveryFactor10yr = tenYearRecovery.valueAfter / amount;
     expect(recoveryFactor10yr).toBeLessThan(Math.pow(recoveryFactor1yr, 10));
   });
+
+  it("reports cagrPct consistent with changePct and years, and equal to changePct for a 1-year horizon", () => {
+    const oneYear = simulateScenario(equityHeavy, amount, "Normal market", 1);
+    expect(oneYear.cagrPct).toBeCloseTo(oneYear.changePct, 1);
+
+    const tenYear = simulateScenario(equityHeavy, amount, "Crisis", 10);
+    const impliedGrowthFactor = Math.pow(1 + tenYear.cagrPct / 100, 10);
+    const expectedValue = Math.round(amount * impliedGrowthFactor);
+    expect(Math.abs(expectedValue - tenYear.valueAfter)).toBeLessThan(amount * 0.01);
+  });
 });

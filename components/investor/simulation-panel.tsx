@@ -7,6 +7,7 @@ interface ScenarioResult {
   scenario: string;
   valueAfter: number;
   changePct: number;
+  cagrPct: number;
 }
 
 const HORIZON_OPTIONS = [
@@ -141,7 +142,15 @@ export function SimulationPanel({ allocationLines }: { allocationLines: Allocati
                   }`}
                 >
                   {r.changePct >= 0 ? "+" : ""}
-                  {r.changePct}%
+                  {r.changePct}% absolute
+                </p>
+                <p
+                  className={`mt-0.5 text-xs tabular ${
+                    r.cagrPct >= 0 ? "text-muted" : "text-red-400/80"
+                  }`}
+                >
+                  {r.cagrPct >= 0 ? "+" : ""}
+                  {r.cagrPct}% CAGR
                 </p>
               </div>
             ))}

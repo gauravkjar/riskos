@@ -45,7 +45,10 @@ export function simulatePortfolio(
 export interface NamedScenarioResult {
   scenario: string;
   valueAfter: number;
+  /** Absolute (total) return over the full holding period. */
   changePct: number;
+  /** Compound annual growth rate implied by `changePct` over `years`. */
+  cagrPct: number;
 }
 
 export const SCENARIO_NAMES = [
@@ -113,9 +116,12 @@ export function simulateScenario(
   const growthFactor =
     (1 + shockPct / 100) * Math.pow(1 + normalPct / 100, remainingYears);
 
+  const cagr = Math.pow(growthFactor, 1 / years) - 1;
+
   return {
     scenario: scenarioName,
     valueAfter: Math.round(amount * growthFactor),
     changePct: Math.round((growthFactor - 1) * 1000) / 10,
+    cagrPct: Math.round(cagr * 1000) / 10,
   };
 }
